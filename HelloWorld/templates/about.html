@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{%load static %}
 <html>
 <head>
 
@@ -12,12 +13,13 @@
     <meta name="keywords" content="日盈律师事务所">
     <meta name="description" content="日盈律师事务所">
     <!--<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">-->
-    <link rel="stylesheet" type="text/css"  href="css/font-awesome-4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" type="text/css"  href="css/swiper-bundle.min.css">
-    <link rel="stylesheet" type="text/css" href="css/base.css">
-    <script type="text/javascript" src="js/jquery.js"></script>
-    <script type="text/javascript" src="js/base.js"></script>
-    <script type="text/javascript" src="js/swiper-bundle.min.js"></script>
+    <link rel="stylesheet" type="text/css"  href="/static/css/font-awesome-4.7.0/css/font-awesome.min.css">
+    <img > 
+    <link rel="stylesheet" type="text/css"  href="{% static 'css/swiper-bundle.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}">
+    <script type="text/javascript" src="{% static 'js/jquery.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/base.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/swiper-bundle.min.js' %}"></script>
 </head>
 
 <body>
@@ -27,7 +29,7 @@
     <div class="head_container">
 
         <!--logo开始-->
-        <a href="index.html" class="logo"><img src="img/logo.png"></a>
+        <a href="index.html" class="logo"><img src="{% static 'img/logo.png' %}"></a>
         <!--logo结束-->
 
         <!--头部总按钮开始-->
@@ -164,7 +166,7 @@
                 <span></span>
                 <h2>事务所宣传片</h2>
             </div>
-            <video src="" data-src="img/section1.mp4" controls muted id="about_video"></video>
+            <video src="" data-src="{% static 'img/section1.mp4' %}" controls muted id="about_video"></video>
         </div>
 
     </div>
@@ -199,11 +201,11 @@
                     <h2>021-60560339</h2>
                     <p>总部咨询热线(周一至周五9.00-17.30)</p>
                     <div class="erweima">
-                        <img src="img/erweima.png">
+                        <img src="{% static 'img/erweima.png' %}">
                         <p>官方公众号</p>
                     </div>
                     <div class="erweima">
-                        <img src="img/erweima.png">
+                        <img src="{% static 'img/erweima.png' %}">
                         <p>刑辩中心公众号</p>
                     </div>
 
