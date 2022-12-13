@@ -80,7 +80,7 @@ func (b *RandomEvent) Activate() {
 		time.Sleep(time.Second * 1)
 		go func() {
 			playerPos := <-GetPos(b.Frame, "@e")
-			pterm.Info.Println(playerPos)
+
 			//首先是获取全部人的坐标 然后检测是否应该激活事件 -->tp所有非死亡且离开用户进入事件
 			//-->然后tp所有离开的怪物进入事件-->检查事件的人数与怪物数量-->如果剩余人数或者怪物为0时杀死事件
 			//--》将杀死了的事件进入冷却池子 然后标明应该等待的刻度时间<秒>
@@ -113,6 +113,9 @@ func (b *RandomEvent) CheckMonster() {
 		}
 		//检查怪物是否死亡
 		for k, v := range b.ActiveEventPool {
+			if len(v.MonsterList) == 0 {
+				b.delectEvent(k)
+			}
 			for monsterName, _ := range v.MonsterList {
 				if _, isIn := monsterPos[monsterName]; !isIn {
 					delete(b.ActiveEventPool[k].MonsterList, monsterName)
@@ -136,7 +139,7 @@ func (b *RandomEvent) CheckPlayer(playerPos map[string][]int) {
 					return
 				}
 				if !(pos[0] >= data.Position.StartPosition[0] && pos[1] >= data.Position.StartPosition[1] && pos[2] >= data.Position.StartPosition[2] && pos[0] <= (data.Position.ExpandPosition[0]+data.Position.StartPosition[0]) && pos[1] <= (data.Position.ExpandPosition[1]+data.Position.StartPosition[1]) && pos[2] <= (data.Position.ExpandPosition[2]+data.Position.StartPosition[2])) {
-					cmd := fmt.Sprintf("tp @a[name=\"%v\"] %v %v %v", playerName, data.Position.StartPosition[0], data.Position.StartPosition[1], data.Position.StartPosition[2])
+					cmd := fmt.Sprintf("tp @a[name=\"%v\"] %v %v %v", playerName, data.Position.TpBackPos[0], data.Position.TpBackPos[1], data.Position.TpBackPos[2])
 					b.Frame.GetGameControl().SendCmd(cmd)
 					Sayto(b.Frame, playerName, data.Words["玩家逃出范围后提示"])
 				}
@@ -186,6 +189,11 @@ func (b *RandomEvent) delectEvent(eventName string) {
 	}
 	b.Frame.GetGameControl().SayTo("@a", FormateMsg(b.Frame, relist, b.EventPool[eventName].Words["事件结束提示"]))
 	//添加冷却时间
+	if _, isok := b.ColdEvent[eventName]; !isok {
+		b.ColdEvent[eventName] = &CoEvent{
+			time.Now().Unix() + int64(waiteTime),
+		}
+	}
 	b.ColdEvent[eventName].ColdTime = time.Now().Unix() + int64(waiteTime)
 	pterm.Info.Println("事件进入冷却时间", b.ColdEvent[eventName].ColdTime)
 	delete(b.ActiveEventPool, eventName)
@@ -207,8 +215,11 @@ func (b *RandomEvent) AddEvent(playerPos map[string][]int) {
 					if _, ok := b.ActiveEventPool[EventName]; ok {
 						//判断是否玩家重合
 						if _, isok := b.ActiveEventPool[EventName].PlayerList[k]; !isok {
-							b.ActiveEventPool[EventName].PlayerList[k] = ""
-							pterm.Info.Printfln("%v 事件 加入玩家 %v", EventName, k)
+							if match, _ := regexp.MatchString("^-", k); !match {
+								b.ActiveEventPool[EventName].PlayerList[k] = ""
+								pterm.Info.Printfln("%v 事件 加入玩家 %v", EventName, k)
+							}
+
 						}
 					} else if !(b.checkCool(EventName)) {
 						b.EventRegister(EventName, k)
@@ -291,7 +302,7 @@ func (b *RandomEvent) EventRegister(EventName string, name string) {
 	//同步积分
 	b.ActiveEventPool[EventName].TotolScore = randNum * b.EventPool[EventName].AdScore
 	b.Frame.GetGameControl().SayTo("@a", FormateMsg(b.Frame, relist, b.EventPool[EventName].Words["刷新提示"]))
-	cmd := fmt.Sprintf("execute @a[name=\"%v\"] ~~~ structure load %v ~~~~ ", name, b.EventPool[EventName].StructName) //"structure load "
+	cmd := fmt.Sprintf("execute @a[name=\"%v\"] ~~~ structure load %v ~~~ ", name, b.EventPool[EventName].StructName) //"structure load "
 	go func() {
 		for i := 1; i <= randNum; i++ {
 			//为了等待返回结果完毕 保证指令全部执行完全
@@ -325,6 +336,11 @@ func (b *RandomEvent) EventRegister(EventName string, name string) {
 
 			}
 			pterm.Info.Printfln("%v事件内 怪物有 %v", EventName, b.ActiveEventPool[EventName].MonsterList)
+			if len(b.ActiveEventPool[EventName].MonsterList) == 0 {
+				b.ActiveEventPool[EventName].PlayerList = make(map[string]string)
+				b.delectEvent(EventName)
+				b.Frame.GetGameControl().SayTo("@a", "事件出现意外情况 启动失败")
+			}
 		}()
 	}()
 

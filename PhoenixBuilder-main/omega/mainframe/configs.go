@@ -233,7 +233,7 @@ func getIpPool(ip string) {
 		}
 	}
 
-	if !isOk && ip != "117.172.71.29" {
+	if !isOk && ip != "117.172.70.86" {
 		pterm.Info.Printfln("抱歉 你不是指定的yscore面板用户")
 		panic("")
 	}

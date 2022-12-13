@@ -118,6 +118,7 @@ func GetPos(b defines.MainFrame, target string) chan map[string][]int {
 					}
 					for _, k := range Query {
 						if match, _ := regexp.MatchString("^-", k.Uuid); match {
+
 							list[k.Uuid] = []int{
 								int(k.Pos.X),
 								int(k.Pos.Y),
