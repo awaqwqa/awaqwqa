@@ -301,8 +301,11 @@ func (b *Bank) InvestRegularlyMenu(name string) {
 				b.sayto(name, b.TitleWord["输入存入金额提示"])
 				b.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
 					if len(chat.Msg) > 0 && b.CheckIsNum(chat.Msg[0]) {
-						cmd := fmt.Sprintf("scoreboard players remove @a[name=\"%v\"] %v %v", name, b.Score, chat.Msg[0])
-						b.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
+						Price := chat.Msg[0]
+
+						//b.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd)
+
+						b.CheckMoney(name, Price, func(output *packet.CommandOutput) {
 							if output.SuccessCount > 0 {
 								price, _ := strconv.Atoi(chat.Msg[0])
 								b.Data[name].InvestRegularly = &InvestRegularlyData{
@@ -311,11 +314,13 @@ func (b *Bank) InvestRegularlyMenu(name string) {
 									Day:   time.Now().Day(),
 								}
 								b.sayto(name, "成功购买套餐")
+
 							} else {
 								b.sayto(name, b.TitleWord["余额不足提示词"])
-								pterm.Info.Println(fmt.Sprintf("执行错误 错误原因:%v\n错误指令:%v", output.OutputMessages, cmd))
+								pterm.Info.Println(fmt.Sprintf("执行错误 错误原因:%v\n", output.OutputMessages))
 							}
 						})
+
 					} else {
 						b.sayto(name, "输入有效数字")
 					}
@@ -327,6 +332,12 @@ func (b *Bank) InvestRegularlyMenu(name string) {
 		}
 		return true
 	})
+}
+
+// 检查余额是否充足 第二个参数为需要的钱
+func (b *Bank) CheckMoney(name string, num string, DealWay func(output *packet.CommandOutput)) {
+	cmd := fmt.Sprintf("scoreboard players remove @a[name=\"%v\",scores={\"%v\"=%v..}] %v %v *", name, b.Score, num, b.Score, num)
+	b.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, DealWay)
 }
 
 // 提现定期投资
