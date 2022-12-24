@@ -7,6 +7,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/pterm/pterm"
@@ -18,7 +19,8 @@ type RandomEvent struct {
 	//正在活动中的事件
 	ActiveEventPool map[string]*AcEvent
 	//冷却事件池子
-	ColdEvent map[string]*CoEvent
+	ColdEvent                 map[string]*CoEvent
+	BiologicalComparisonTable map[string]string
 }
 
 // 活动事件的信息
@@ -68,14 +70,33 @@ func (o *RandomEvent) Init(cfg *defines.ComponentConfig) {
 	//初始化activeEventPool
 	o.ActiveEventPool = make(map[string]*AcEvent)
 	o.ColdEvent = make(map[string]*CoEvent)
+	o.BiologicalComparisonTable = make(map[string]string)
 }
 func (o *RandomEvent) Inject(frame defines.MainFrame) {
 	o.Frame = frame
 	o.BasicComponent.Inject(frame)
 	CreateNameHash(o.Frame)
+	//同步让生物的名字与对应的uuid同步
+	o.Frame.GetGameListener().SetOnAnyPacketCallBack(func(p packet.Packet) {
+		if p.ID() == 13 {
+
+			id := strconv.Itoa(int(p.(*packet.AddActor).EntityUniqueID))
+			pterm.Info.Println(p.(*packet.AddActor).EntityMetadata)
+			if name, ok := p.(*packet.AddActor).EntityMetadata[4]; ok {
+
+				if v, ok := name.(string); ok {
+					o.BiologicalComparisonTable[id] = v
+				}
+				pterm.Info.Println(o.BiologicalComparisonTable)
+
+			}
+
+		}
+	})
 }
 
 func (b *RandomEvent) Activate() {
+
 	for {
 		time.Sleep(time.Second * 1)
 		go func() {
@@ -90,6 +111,7 @@ func (b *RandomEvent) Activate() {
 			//再来是检查玩家是否有跑出事件 死亡则删除 没有则传送返回
 			b.CheckPlayer(playerPos)
 			b.CheckMonster()
+
 		}()
 	}
 }
@@ -105,6 +127,9 @@ func (b *RandomEvent) CheckMonster() {
 					data := b.EventPool[k]
 					//范围外就tp 回来
 					if _, isIn := v.MonsterList[monsterName]; isIn && !(pos[0] >= data.Position.StartPosition[0] && pos[1] >= data.Position.StartPosition[1] && pos[2] >= data.Position.StartPosition[2] && pos[0] <= (data.Position.StartPosition[0]+data.Position.ExpandPosition[0]) && pos[1] <= (data.Position.StartPosition[1]+data.Position.ExpandPosition[1]) && pos[2] <= (data.Position.StartPosition[2]+data.Position.ExpandPosition[2])) {
+						if name, ok := b.BiologicalComparisonTable[monsterName]; ok {
+							monsterName = name
+						}
 						cmd := fmt.Sprintf("tp @e[name=\"%v\"] %v %v %v", monsterName, data.Position.TpBackPos[0], data.Position.TpBackPos[1], data.Position.TpBackPos[2])
 						b.Frame.GetGameControl().SendCmd(cmd)
 					}
