@@ -1,3 +1,0 @@
-[submodule "depends"]
-	path = depends
-	url = https://github.com/LNSSPsd/phoenixbuilder-depends.git
